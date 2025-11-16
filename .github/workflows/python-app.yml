@@ -34,7 +34,19 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Check if both source and test changed
+      id: filecheck
+      run: |
+        CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+        echo "$CHANGED_FILES"
+
+        if echo "$CHANGED_FILES" | grep -q "basic_programs/HelloWorld.py" && echo "$CHANGED_FILES" | grep -q "tests/test_HelloWorld.py"; then
+          echo "run=true" >> $GITHUB_OUTPUT
+        else
+          echo "run=false" >> $GITHUB_OUTPUT
+        fi
     - name: Test with pytest
+      if: steps.filecheck.outputs.run == 'true' 
       env:
         PYTHONPATH: ${{ github.workspace }}
       run: |
